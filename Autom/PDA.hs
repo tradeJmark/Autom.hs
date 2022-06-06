@@ -18,8 +18,8 @@ instance (Ord s, Ord sa) => Processable (PDA s is sa) is where
     process pda@PDA{startState, startStack, accept} str =
         let startSet = S.singleton (startState, [startStack])
             expanded = epsilonExpand pda
-            ends = S.map fst $ expanded $ foldl' (\poss c -> foldMap (safeTransition pda (Just c)) (expanded poss)) startSet str
-        in not $ ends `S.disjoint` accept
+            ends = foldl' (\poss c -> foldMap (safeTransition pda (Just c)) (expanded poss)) startSet str
+        in not $ ((S.map fst . expanded) ends) `S.disjoint` accept
 
 epsilonExpand :: (Ord s, Ord sa) => PDA s ia sa -> S.Set (Status s sa) -> S.Set (Status s sa)
 epsilonExpand pda statuses 
