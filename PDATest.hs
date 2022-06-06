@@ -7,10 +7,8 @@ data State = P | Q | R deriving (Ord, Eq)
 data Stack = A | Z deriving (Ord, Eq)
 
 pdaTransition :: State -> Maybe BinaryAlphabet -> Stack -> Maybe (Set (State, [Stack]))
-pdaTransition P (Just Zero) Z = Just $ singleton (P, [A, Z])
-pdaTransition P (Just Zero) A = Just $ singleton (P, [A, A])
-pdaTransition P Nothing     Z = Just $ singleton (Q, [Z])
-pdaTransition P Nothing     A = Just $ singleton (Q, [A])
+pdaTransition P (Just Zero) c = Just $ singleton (P, [A, c])
+pdaTransition P Nothing     c = Just $ singleton (Q, [c])
 pdaTransition Q (Just One)  A = Just $ singleton (Q, [])
 pdaTransition Q Nothing     Z = Just $ singleton (R, [Z])
 pdaTransition _ _ _           = Nothing
