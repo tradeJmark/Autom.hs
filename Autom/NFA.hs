@@ -2,7 +2,6 @@
 module  Autom.NFA(NFA(..), process) where
 import Data.Foldable(foldl')
 import qualified Data.Set as S
-import Data.List(foldl')
 import Autom.Processable
 import Data.Maybe(fromMaybe)
 

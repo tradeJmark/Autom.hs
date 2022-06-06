@@ -1,6 +1,4 @@
 import Autom.NFA
-import Autom.Processable
-import Autom.Alphabets
 import Data.Set(singleton, fromList, Set)
 
 data EmailState = Init | Name | At | Domain | Dot | TLD deriving (Ord, Eq)
@@ -28,9 +26,8 @@ emailTransition _ _ = Nothing
 emailValidator :: NFA EmailState Char
 emailValidator = NFA{startState=Init, transition=emailTransition, accept=singleton TLD}
 
-interpretResults :: Maybe Bool -> [Char]
-interpretResults (Just True) = "Valid"
-interpretResults (Just False) = "Invalid"
-interpretResults Nothing = "Invalid"
+interpretResults :: Bool -> [Char]
+interpretResults True = "Valid"
+interpretResults False = "Invalid"
 
-main = interact $ unlines . map (interpretResults . processString emailValidator) . lines
+main = interact $ unlines . map (interpretResults . process emailValidator) . lines
