@@ -2,12 +2,12 @@
 Have you ever been writing your Haskell code and though, wow, if only I had a state machine? No? Well, anyway, here's some code for implementing state machines in Haskell.
 
 ## Deterministic Finite Automata
-A [Deterministic Finite Automaton (DFA)](https://en.wikipedia.org/wiki/DFSA) is a state machine characterized by a finite number of states and exactly one possible move from a given state to another (or the same) state upon encountering a particular input character. Formally, a DFA has five components:
+A [Deterministic Finite Automaton (DFA)](https://en.wikipedia.org/wiki/DFSA) is a state machine characterized by a finite number of states and exactly one possible move from a given state to another (or the same) state upon encountering a particular input character. They can recognize the category of laguages known as [regular languages](https://en.wikipedia.org/wiki/Regular_language) Formally, a DFA has five components:
 
 - A set of possible states;
 - An alphabet of possible input characters;
 - A transition function which, given a current state and input character, returns a new state to move to;
-- A state to start from, and
+- A state to start from; and
 - A set of "accept" states which, if ended on, produce a positive result.
 
 Autom models the first two aspects as data types, the transition function as a function (go figure), the start state as a field on a DFA instance, and the accepting set as a `Data.Set` (again, go figure). So, let us observe the following DFA from Wikipedia:
@@ -102,3 +102,50 @@ process parser [One, One, One]
 ```
 
 I've actually used the NFA to implement something that at least approaches usefulness, a validator of email addresses, so if you want a more complete look at using NFA, [check it out](EmailValidator.hs).
+
+## Pushdown Automata
+A [Pushdown Automaton (PDA)](https://en.wikipedia.org/wiki/Pushdown_automaton) is similar to the above finite state machines, only it also has a stack. PDAs can conceptually be either deterministic or not, but the Autom implementation is nondeterministic, so it will be similar to the NFA above, but with a stack. The stack makes it more powerful than the other two machine types, and it can recognize the broader class of [context-free languages](https://en.wikipedia.org/wiki/Context-free_languages). Here's the seven components of the formal description:
+- Again, a set of states;
+- As above, an input alphabet;
+- A set of characters that can go on the stack, known as the stack alphabet;
+- A transition function, although this one is a little more complicated, because the output is not just a state, but additionally, a string of stack alphabet symbols to be pushed onto the stack;
+- A start state;
+- A stack symbol that starts at the head of the stack; and
+- A set of accept states, just like above.
+
+In Autom, the parts that are shared with the finite state machines above are implemented in the same way, and additionally, the stack alphabet is a data type (like the input alphabet), and the start stack symbol is a field on a PDA instance. Let's look at an example PDA (thanks yet again, Wikipedia):
+
+![0^n1^n](https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Pda-example.svg/2560px-Pda-example.svg.png)
+
+This automaton recognizes strings in the binary alphabet composed of an arbitrary number of 0s, followed by _that same number_ of 1s. This would not have been possible to recognize with a finite state machine, the stack is what enables it. The constructions that look like `Z/AZ` mean that this path can be taken when the top of the stack is `Z`, and after `Z` is popped off the stack, it is to be replaced with `AZ` being pushed on the stack. The transitions where the character is <code>&epsilon;</code> (epsilon transitions) means that the machine can take this transition without needing to actually consume a character. I think it will help to go through an execution of his machine in order to understand how it works, since it's a little more complex than the finite state machines. Let's use the string 0011.
+
+- At the start, we are on state `p`, and on the stack is a `Z` (the image doesn't really show this, but I'm telling it to you now). This is the status (I don't think "status" is a term of art here, it's just what I use to describe the combination of a state and the stack frozen at a point in time) which I will refer to with the notation `p[Z]`. However, since the machine can take an epsilon transition to `q` and further to `r` (note that it's always possible to go freely from `p` to `q`, but it's only currently possible to go to `r` because of a `Z` showing at the top of the stack), the actual status we might have before consuming any character is `p[Z] | q[Z] | r[Z]`.
+- Now, we consume a 0. From `p[Z]`, there are two transitions we can take: `0; Z/AZ` back to `p`, which lands us at `p[AZ]`, or <code>&epsilon;</code> to `q`. We can ignore that, and all other epsilon moves for that matter, because we already dealt with that when we expended our set at the end of last step. From `q[Z]`, since there are no 0 moves, we can't go anywhere, and the same is true for `r[Z]`, as you can never go anywhere starting from there. So, after consuming the 0, our status is certainly `p[AZ]`. Let's expand that again by epsilon moves before consuming anything else: we can still take the path to `q`, but with no `Z` at the top of the stack, we can't go from `q` to `r`. So, our status at the moment is either `p[AZ]` or `q[AZ]`.
+- Now we consume the second 0. From `p[AZ]`, we can take `0; A/AA`, which pops the `A` from the top of the stack and adds in two more, leaving us with a possible status of `p[AAZ]`. We again have no possible move to make from `q[AZ]`, so our only potential state before expansion is `p[AAZ]`. Looking at epsilon moves we can make, again the only option is the one from `p` to `q`. That adds `q[AAZ]` as a potential status.
+- Now we consume a 1. There are no 1 moves from `p`, so now that's a dead end. We can finally take the transition from `q` to itself, though. The reason this shows <code>A/&epsilon;</code> is that it adds nothing onto the stack after popping; it is a pure pop. It leaves us at `q[AZ]`. There is no epsilon move to be made from here.
+- Consuming the final 1, our only choice now is to take the `q` self-transition again, popping the stack again, leaving us at `q[Z]`. Uh-oh, `q` isn't an accept state. But ah-hah, we have an epsilon move to make this time. We can move, without needing another character, over to the status `r[Z]`, and since `r` is an accpeting state, congratulations, we have a valid string. The moves we took, sequentially, to get to the accept state, were <code>0; Z/AZ -> 0; A/AA -> &epsilon; -> 1; A/&epsilon; -> 1; A/&epsilon; -> &epsilon;; Z/Z</code>.
+
+So now that hopefully you understand how a PDA works, let's look at the Autom version of this one.
+```haskell
+data State = P | Q | R deriving (Eq, Ord)
+data BinaryAlphabet = Zero | One
+data StackAlphabet = A | Z deriving (Eq, Ord)
+
+transitionFunction :: State -> Maybe BinaryAlphabet -> StackAlphabet -> Maybe (Set (State, [StackAlphabet]))
+transitionFunction P (Just Zero) c = Just $ Data.Set.singleton (P, [A, c])
+transitionFunction P Nothing c = Just $ Data.Set.singleton (Q, [c])
+transitionFunction Q (Just One) A = Just $ Data.Set.singleton (Q, [])
+transitionFunction Q Nothing Z = Just $ Data.Set.singleton (R, [Z])
+transitionFunction _ _ _ = Nothing
+
+parser :: PDA State BinaryAlphabet StackAlphabet
+parser = PDA{startState=P, transition=transitionFunction, startStack=Z, accept=Data.Set.singleton R}
+```
+
+Again, a little more complex as we make a more powerful machine than earlier ones. It has basically the same quirks as NFAs (returning a `Maybe` and needing the `Nothing` line), and a few new ones. First of all, this time the input character is a `Maybe` character now, to accomodate epsilon-moves. `Nothing` represents <code>&epsilon;</code>. There's also a third argument to the transition, since moves in PDAs depend additionally on the character at the top of the stack. The return value (disregarding the `Maybe`) is a set of what I've been calling statuses, although it's more of a partial status, i.e. a new state plus the new characters to add onto the top of the stack (not an entire stack itself). The only other thing probably worth mentioning is that now I'm requiring the stack alphabet type to also instance `Ord`, since it has to be part of a set. Like the other automata, my `PDA` type instances `Processable`, so the usage interface is again the same:
+```haskell
+process parser [Zero, Zero, Zero, One, One, One]
+=> True
+process parser [Zero, One, One]
+=> False
+```
