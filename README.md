@@ -162,3 +162,12 @@ processString parser "010101"
 ```
 
 This can be very useful especially for the DFA, because you'll often want as small an alphabet as possible, every symbol needing to have a path from every state. In the nondeterministic machines, this is not as essential, because you can often make use of a significantly larger alphabet than strictly necessary, and then just not have any movements at any point in the machine for characters that you don't want to use. This is the approach taken by [EmailValidator](EmailValidator.hs), which uses `Char` directly as its alphabet and just doesn't use any symbols besides letters, @, and . in its transitions.
+
+## HQs
+I've never made something cool enough for people to frequently have questions about it, but I'll answer some hypothetical questions one might have here.
+
+### Q: Why would I ever want to use this?
+Well, you probably wouldn't, mostly. Finite Automata can do most of what simple regular expressions can, and PDAs can do most of what the more extended modern regex implementations can do, but usually the regexes will be more convenient. This is kind of like how the concept of a Turing Machine exists and is a useful model for theory, but in practice any machine you'll use will have a von Neumann architecture. These formal state machines are useful to learn about language theory, but you won't often use them in practical applications. When you are learning about them, though, it's often really helpful to be able to implement them for yourself and play around with them. I first did something like this in Scala back in university so that I could check my homework in a course named Computability & Formal Language. If you're in that kind of class you might actually really like this library.
+
+### Q: I think that first question-asker is dumb, and I love this magnificent library. How can I install it?
+That's an excellent question. I have no idea. I use Haskell for fun, I've never made a library with it before. If you wanna help me set that up, go right ahead and post in the Issues on this repo. I might eventually look it up on my own, who knows. Until then, I guess clone it and write your code within the root? It's really just a toy.
