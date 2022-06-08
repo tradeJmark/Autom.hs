@@ -2,7 +2,7 @@
 Have you ever been writing your Haskell code and though, wow, if only I had a state machine? No? Well, anyway, here's some code for implementing state machines in Haskell.
 
 ## Deterministic Finite Automata
-A [Deterministic Finite Automaton (DFA)](https://en.wikipedia.org/wiki/DFSA) is a state machine characterized by a finite number of states and exactly one possible move from a given state to another (or the same) state upon encountering a particular input character. They can recognize the category of laguages known as [regular languages](https://en.wikipedia.org/wiki/Regular_language) Formally, a DFA has five components:
+A [Deterministic Finite Automaton (DFA)](https://en.wikipedia.org/wiki/DFSA) is a state machine characterized by a finite number of states and exactly one possible move from a given state to another (or the same) state upon encountering a particular input character. They can recognize the category of laguages known as [regular languages](https://en.wikipedia.org/wiki/Regular_language). Formally, a DFA has five components:
 
 - A set of possible states;
 - An alphabet of possible input characters;
