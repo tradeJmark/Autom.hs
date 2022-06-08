@@ -101,7 +101,7 @@ process parser [One, One, One]
 => False
 ```
 
-I've actually used the NFA to implement something that at least approaches usefulness, a validator of email addresses, so if you want a more complete look at using NFA, [check it out](EmailValidator.hs).
+I've actually used the NFA to implement something that at least approaches usefulness, a validator of email addresses (albeit an overly restrictive one), so if you want a more complete look at using NFA, [check it out](EmailValidator.hs).
 
 ## Pushdown Automata
 A [Pushdown Automaton (PDA)](https://en.wikipedia.org/wiki/Pushdown_automaton) is similar to the above finite state machines, only it also has a stack. PDAs can conceptually be either deterministic or not, but the Autom implementation is nondeterministic, so it will be similar to the NFA above, but with a stack. The stack makes it more powerful than the other two machine types, and it can recognize the broader class of [context-free languages](https://en.wikipedia.org/wiki/Context-free_languages). Here's the seven components of the formal description:
@@ -149,3 +149,16 @@ process parser [Zero, Zero, Zero, One, One, One]
 process parser [Zero, One, One]
 => False
 ```
+
+I've fully implemented the PDA we've been discussing as [PDATest](PDATest.hs), so you can check that out for an example.
+
+## Included alphabets
+The codebase here includes the type class `Alphabet` in the `Autom.Alphabets` module. You can instance this class with your alphabet, and implement the `parse` method to convert a given `Char` into a symbol from your alphabet (strictly, `Maybe` a symbol, where `Nothing` means the input is invalid for that alphabet). This unlocks the use of `processString`, which takes any `Processable` (so long as its input alphabet is an `Alphabet`) and a string instead of a list of alphabet symbols. You can use it instead of `process` when your input is a string. The binary alphabet we've used in a bunch of above examples, composed of `Zero` and `One`, is included here, and it is an instance of `Alphabet`, so for example using that first DFA from above, we could run this:
+```haskell
+processString parser "0010101"
+=> True
+processString parser "010101"
+=> False
+```
+
+This can be very useful especially for the DFA, because you'll often want as small an alphabet as possible, every symbol needing to have a path from every state. In the nondeterministic machines, this is not as essential, because you can often make use of a significantly larger alphabet than strictly necessary, and then just not have any movements at any point in the machine for characters that you don't want to use. This is the approach taken by [EmailValidator](EmailValidator.hs), which uses `Char` directly as its alphabet and just doesn't use any symbols besides letters, @, and . in its transitions.
