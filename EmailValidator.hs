@@ -18,7 +18,7 @@ emailTransition Name c
 emailTransition At c | isLetter c = Just $ singleton Domain
 emailTransition Domain c
     | isLetter c = Just $ singleton Domain
-    | c == '.'        = Just $ fromList [Domain, Dot]
+    | c == '.'   = Just $ fromList [Domain, Dot]
 emailTransition Dot c | isLetter c = Just $ singleton TLD
 emailTransition TLD c | isLetter c = Just $ singleton TLD
 emailTransition _ _ = Nothing
